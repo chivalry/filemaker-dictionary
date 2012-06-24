@@ -1,1 +1,7 @@
-A set of FileMaker custom functions to enable human-readable dictionary and array data structures.
+This FileMaker file uses the ScriptMaster plugin to execute Groovy code that provides FileMaker with JSON style arrays and dictionaries. The primary purpose is to provide FileMaker with dictionaries that can easily read by humans.
+
+As Groovy includes built-in support for JSON structures, and ScriptMaster provides the ability to execute Groovy code, using ScriptMaster makes the creation and editing of these structures much easier than would be possible with native FileMaker calculations. And since ScriptMaster is free, there's no great worry about the requirement of a plugin for the functionality.
+
+Currently the implementation is just a single custom function that registers each of the plugin functions required. Executing this custom function in a script will allow access to the plugin functions.
+
+The first version will only have the basics for array and dictionary editing, but eventually it's possible that all of the Groovy support for Lists (arrays) and Maps (Dictionaries) will be provided, or at least a larger subset than just the basic editing. How far this goes really depends on my own future desires and any feedback received from other users.
