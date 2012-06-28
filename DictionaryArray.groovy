@@ -13,6 +13,13 @@ class Collect {
    * 
    */
   def object
+  JsonBuilder builder
+  JsonSlurper parser
+  
+  def init() {
+    builder = new JsonBuilder()
+    parser  = new JsonSlurper()
+  }
   
   /**---------------------------------------------------------------------------
    * Empty initiator, this doesn't work without it, don't know enough about
@@ -21,7 +28,7 @@ class Collect {
    * parameter.
    */
   def Collect() {
-    
+    this.init()
   }
 
   /**---------------------------------------------------------------------------
@@ -29,7 +36,8 @@ class Collect {
    * another Collect object.
    */
   def Collect( String input ) {
-    this.object = new JsonSlurper().parseText( input )
+    this.init()
+    this.object = this.parser.parseText( input )
   }
   
   /**---------------------------------------------------------------------------
@@ -37,7 +45,7 @@ class Collect {
    * (number, array or dictionary), it should be treated as that instead of a
    * string.
    */
-  def convertValue( value ) {
+  Object convertValue( Object value ) {
     if ( value instanceof String ) {
       if ( value.isInteger() ) {
         value = value.toInteger()
@@ -45,7 +53,7 @@ class Collect {
         value = value.toDouble()
       } else if ( value.startsWith( ['['] )
                 | value.startsWith( ['{'] ) ) {
-        value = new JsonSlurper().parseText( value )
+        value = this.parser.parseText( value )
       }
     }
     
@@ -56,7 +64,8 @@ class Collect {
    * Convert the object (a List or a Map) into a JSON representation.
    */
   String getOutput() {
-    return new JsonBuilder( this.object ).toPrettyString()
+    this.builder.content = this.object
+    return this.builder.toPrettyString()
   }
   
   /**---------------------------------------------------------------------------
@@ -79,6 +88,7 @@ class Array extends Collect {
    * Empty Arrays start out as empty Lists.
    */
   def Array() {
+    super.init()
     this.object = []
   }
   
@@ -86,6 +96,7 @@ class Array extends Collect {
    * Initialize an Array with a List, converting any values as needed.
    */
   def Array( List list ) {
+    super.init()
     List newList = []
     list.each { entry -> newList.add( convertValue( entry ) ) }
     this.object = newList
@@ -101,36 +112,48 @@ class Array extends Collect {
   /**---------------------------------------------------------------------------
    * Add the specified value to the end of the Array.
    */
-  void add( value ) {
+  void add( Object value ) {
     this.object.add( this.convertValue( value ) )
   }
   
   /**---------------------------------------------------------------------------
    * Return the first value in the list.
    */
-  def head() {
+  Object head() {
     return this.object.head()
   }
   
   /**---------------------------------------------------------------------------
    * Return a new list with everything except the first value.
    */
-  def tail() {
-    return new JsonBuilder( this.object.tail() ).toPrettyString()
+  Object tail() {
+    return new Array( this.object.tail() )
   }
   
   /**---------------------------------------------------------------------------
    * Return the value at the specified index.
    */
-  def value( index ) {
+  Object value( Integer index ) {
     return this.object[ index ]
   }
   
   /**---------------------------------------------------------------------------
    * Return true if there are no values in the Array.
    */
-  def isEmpty() {
+  boolean isEmpty() {
     return this.count() == 0
+  }
+  
+  Object getAt( Integer index ) {
+    return this.value( index )
+  }
+  
+  void putAt( Integer index, Object value ) {
+    this.object[ index ] = this.convertValue( value )
+  }
+  
+  boolean equals( Array array ) {
+    return this.object == array.object
   }
 }
 
@@ -142,30 +165,68 @@ class Array extends Collect {
  ******************************************************************************/
 class Dictionary extends Collect {
   
+  def Dictionary() {
+    super.init()
+    this.object = [:]
+  }
+  
+  def Dictionary( String input ) {
+    super( input )
+  }
+  
+  def Dictionary( Map map ) {
+    super.init()
+    Map newMap = [:]
+    map.each{ key, value -> newMap[key] = convertValue( value ) }
+    this.object = newMap
+  }
+  
   /**---------------------------------------------------------------------------
    * Set the value for the specified key, overriding any existing value if it
    * exists.
    */
-  def setValueForKey( key, value ) {
-    
+  def setValueForKey( String key, Object value ) {
+    this.object[ key ] = value
   }
   
   /**---------------------------------------------------------------------------
    * Return the value stored for the specified key.
    */
-  def getValueForKey( key ) {
-    
+  def getValueForKey( String key ) {
+    return this.object[ key ]
   }
   
   /**---------------------------------------------------------------------------
    * Return true if there are no key/value pairs in the Dictionary.
    */
   def isEmpty() {
-    
+    return this.count() == 0
+  }
+  
+  def getAt( String key ) {
+    return this.getValueForKey( key )
+  }
+  
+  def setAt( String key, Object value ) {
+    this.setValueForKey( key, value )
+  }
+  
+  boolean equals( Dictionary dict ) {
+    return this.object == dict.object
   }
 }
 
-Collect col = new Collect()
+/*******************************************************************************
+ * Test the Collect class
+ ******************************************************************************/
+
+Collect     col
+JsonBuilder json
+String      output
+List        list
+Map         map
+
+col = new Collect()
 assert col.object == null
 col = new Collect( '[1,2,3]' )
 assert col.object == [ 1, 2, 3 ]
@@ -178,19 +239,75 @@ assert col.convertValue( '[1,2]' ) == [ 1, 2 ]
 assert col.convertValue( '{"a":1,"b":2,"c":3}' ) == [ 'a':1, 'b':2, 'c':3 ]
 assert col.convertValue( 1 ) == 1
 
-JsonBuilder json
-String output
-
-def map = [ 'string':'a string', 'number':3.14 ]
+map = [ 'string':'a string', 'number':3.14 ]
 json = new JsonBuilder( map )
 output = json.toPrettyString()
 col = new Collect( output )
 assert col.output == output
 
-def list = ['a','b','c',4,5,6]
+list = ['a','b','c',4,5,6]
 json = new JsonBuilder( list )
 output = json.toPrettyString()
 col = new Collect( output )
 assert col.output == output
 
 assert col.count() == 6
+
+/*******************************************************************************
+ * Test the Array class
+ ******************************************************************************/
+
+Array array
+
+array = new Array()
+assert array.isEmpty()
+array = new Array( [ 'one', '2', 3.14 ] )
+assert array.count() == 3
+assert array.value( 0 ) instanceof String
+assert array.value( 1 ) instanceof Integer
+assert array.value( 2 ) == 3.14
+
+array = new Array( output )
+assert array.value( 0 ) == 'a'
+assert array.count() == 6
+
+array.add( 'seven' )
+assert array.count() == 7
+assert array.value( 6 ) == 'seven'
+
+assert array.head() == 'a'
+assert array.tail().object == ['b','c',4,5,6,'seven']
+
+assert array[6] == 'seven'
+array[6] = 'six'
+assert array.value(6) == 'six'
+assert array[6] == 'six'
+
+array1 = new Array( list )
+array2 = new Array( list )
+assert array1 == array2
+assert array1.output == array2.output
+
+/*******************************************************************************
+ * Test the Dictionary class
+ ******************************************************************************/
+
+Dictionary dict
+dict = new Dictionary()
+assert dict.object == [:]
+assert dict.isEmpty()
+dict.setValueForKey( "string", "value" )
+assert dict.getValueForKey( "string" ) == "value"
+
+map = ['string':'value']
+map['number'] = 3.14
+inner_dict = ['a':1,'b':2,'c':3 ]
+map['dictionary'] = inner_dict
+inner_array = [6,7,8]
+map['array'] = inner_array
+dict = new Dictionary(map)
+assert dict.getValueForKey( 'string' ) == 'value'
+assert dict.getValueForKey( 'number' ) == 3.14
+assert dict.count() == 4
+dict2 = new Dictionary(map)
+assert dict == dict2
