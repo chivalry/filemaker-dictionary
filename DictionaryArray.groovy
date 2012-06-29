@@ -311,3 +311,9 @@ assert dict.getValueForKey( 'number' ) == 3.14
 assert dict.count() == 4
 dict2 = new Dictionary(map)
 assert dict == dict2
+
+/*******************************************************************************
+ * Test function as they'll be called by FileMaker
+ ******************************************************************************/
+
+// arry_Add( _array; _value )
