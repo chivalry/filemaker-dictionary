@@ -142,7 +142,7 @@ class Array extends Collect {
   /**---------------------------------------------------------------------------
    * Return true if there are no values in the Array.
    */
-  boolean isEmpty() {
+  Boolean isEmpty() {
     return this.count() == 0
   }
   
@@ -154,7 +154,7 @@ class Array extends Collect {
     this.object[ index ] = this.convertValue( value )
   }
   
-  boolean equals( Array array ) {
+  Boolean equals( Array array ) {
     return this.object == array.object
   }
 }
@@ -213,7 +213,97 @@ class Dictionary extends Collect {
     this.setValueForKey( key, value )
   }
   
-  boolean equals( Dictionary dict ) {
+  Boolean equals( Dictionary dict ) {
     return this.object == dict.object
+  }
+}
+
+/*******************************************************************************
+ * A collection of static methods that can be directly called with parameters
+ * supplied by FileMaker.
+ *
+ * @author Charles Ross <chivalry@mac.com>
+ * @version 1.0
+ ******************************************************************************/
+class FM {
+  
+  static Array createArray( array ) {
+    Array newArray
+    
+    if ( array == '' ) {
+      newArray = new Array()
+    } else {
+      newArray = new Array( array )
+    }
+    
+    return newArray
+  }
+  
+  static Dictionary createDict( dict ) {
+    def Dictionary newDict
+    
+    if ( dict == '' ) {
+      newDict = new Dictionary()
+    } else {
+      newDict = new Dictionary( dict )
+    }
+    
+    return newDict
+  }
+  
+  static String arry_Add( array, value ) {
+    Array newArray = this.createArray( array )
+    newArray.add( value )
+    return newArray.output
+  }
+  
+  static Integer arry_Count( array ) {
+    Array newArray = this.createArray( array )
+    return newArray.count()
+  }
+  
+  static String arry_Head( array ) {
+    Array newArray = this.createArray( array )
+    return newArray.head()
+  }
+  
+  static Boolean arry_IsEmpty( array ) {
+    Array newArray = this.createArray( array )
+    return newArray.isEmpty()
+  }
+  
+  static String arry_Tail( array ) {
+    Array newArray = this.createArray( array )
+    return newArray.tail().output
+  }
+  
+  static String arry_Value( array, index ) {
+    Array newArray = this.createArray( array )
+    return newArray.value( index.toInteger )
+  }
+  
+  static Integer dict_Count( dict ) {
+    Dictionary newDict = this.createDict( dict )
+    return newDict.count()
+  }
+  
+  static String dict_GetValueForKey( dict, key ) {
+    Dictionary newDict = this.createDict( dict )
+    return newDict.getValueForKey( key )
+  }
+  
+  static Boolean dict_IsEmpty( dict ) {
+    Dictionary newDict = this.createDict( dict )
+    return newDict.isEmpty()
+  }
+  
+  static String dict_RemoveKey( dict, key ) {
+    Dictionary newDict = this.createDict( dict )
+    return newDict.remove( key ).output
+  }
+  
+  static String dict_SetValueForKey( dict, key, value ) {
+    Dictionary newDict = this.createDict( dict )
+    return newDict.setValueForKey( key, value ).output
   }
 }
