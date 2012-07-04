@@ -188,14 +188,15 @@ class Dictionary extends Collect {
    * exists.
    */
   def setValueForKey( String key, Object value ) {
-    this.object[ key ] = value
+    this.object[ key ] = this.convertValue( value )
   }
   
   /**---------------------------------------------------------------------------
    * Return the value stored for the specified key.
    */
   def getValueForKey( String key ) {
-    return this.object[ key ]
+    def value = this.object[ key ]
+    return this.convertValue( value )
   }
   
   /**---------------------------------------------------------------------------
@@ -228,27 +229,19 @@ class Dictionary extends Collect {
 class FM {
   
   static Array createArray( array ) {
-    Array newArray
-    
     if ( array == '' ) {
-      newArray = new Array()
+      return new Array()
     } else {
-      newArray = new Array( array )
+      return new Array( array )
     }
-    
-    return newArray
   }
   
   static Dictionary createDict( dict ) {
-    def Dictionary newDict
-    
     if ( dict == '' ) {
-      newDict = new Dictionary()
+      return new Dictionary()
     } else {
-      newDict = new Dictionary( dict )
+      return new Dictionary( dict )
     }
-    
-    return newDict
   }
   
   static String arry_Add( array, value ) {
@@ -279,7 +272,7 @@ class FM {
   
   static String arry_Value( array, index ) {
     Array newArray = this.createArray( array )
-    return newArray.value( index.toInteger )
+    return newArray.value( index.toInteger() )
   }
   
   static Integer dict_Count( dict ) {
@@ -289,7 +282,12 @@ class FM {
   
   static String dict_GetValueForKey( dict, key ) {
     Dictionary newDict = this.createDict( dict )
-    return newDict.getValueForKey( key )
+    def value = newDict.getValueForKey( key )
+    if ( ( value instanceof List )
+       | ( value instanceof Map ) ) {
+      value = new JsonBuilder( value ).toPrettyString()
+    }
+    return value
   }
   
   static Boolean dict_IsEmpty( dict ) {
@@ -304,6 +302,7 @@ class FM {
   
   static String dict_SetValueForKey( dict, key, value ) {
     Dictionary newDict = this.createDict( dict )
-    return newDict.setValueForKey( key, value ).output
+    newDict.setValueForKey( key, value )
+    return newDict.output
   }
 }
