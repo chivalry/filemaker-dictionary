@@ -244,6 +244,14 @@ class FM {
     }
   }
   
+  static String convertListOrMap( list_or_map ) {
+    if ( ( list_or_map instanceof List )
+       | ( list_or_map instanceof Map ) ) {
+      list_or_map = new JsonBuilder( list_or_map ).toPrettyString()
+    }
+    return list_or_map
+  }
+  
   static String arry_Add( array, value ) {
     Array newArray = this.createArray( array )
     newArray.add( value )
@@ -272,7 +280,8 @@ class FM {
   
   static String arry_Value( array, index ) {
     Array newArray = this.createArray( array )
-    return newArray.value( index.toInteger() )
+    def value = newArray.value( index.toInteger() )
+    return this.convertListOrMap( value )
   }
   
   static Integer dict_Count( dict ) {
@@ -283,11 +292,7 @@ class FM {
   static String dict_GetValueForKey( dict, key ) {
     Dictionary newDict = this.createDict( dict )
     def value = newDict.getValueForKey( key )
-    if ( ( value instanceof List )
-       | ( value instanceof Map ) ) {
-      value = new JsonBuilder( value ).toPrettyString()
-    }
-    return value
+    return this.convertListOrMap( value )
   }
   
   static Boolean dict_IsEmpty( dict ) {
